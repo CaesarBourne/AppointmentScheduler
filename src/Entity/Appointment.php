@@ -19,8 +19,9 @@ class Appointment
     #[ORM\Column]
     private ?\DateTime $endTime = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $participant = null;
+    #[ORM\ManyToOne(targetEntity: Participant::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Participant $participant = null;
 
     public function getId(): ?int
     {
@@ -51,12 +52,12 @@ class Appointment
         return $this;
     }
 
-    public function getParticipant(): ?string
+    public function getParticipant(): ?Participant
     {
         return $this->participant;
     }
 
-    public function setParticipant(string $participant): static
+    public function setParticipant(Participant $participant): static
     {
         $this->participant = $participant;
 

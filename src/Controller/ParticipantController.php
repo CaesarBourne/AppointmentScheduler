@@ -1,43 +1,75 @@
 <?php
 
-// src/Controller/ParticipantController.php
 namespace App\Controller;
 
 use App\Entity\Participant;
 use App\Repository\ParticipantRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/api/participants')]
 class ParticipantController extends AbstractController
 {
-    private $participantRepository;
+    private ParticipantRepository $participantRepository;
+    private EntityManagerInterface $entityManager;
 
-    public function __construct(ParticipantRepository $participantRepository)
-    {
+    public function __construct(
+        ParticipantRepository $participantRepository,
+        EntityManagerInterface $entityManager
+    ) {
         $this->participantRepository = $participantRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/api/participants", methods={"POST"})
-     */
-    public function create(Request $request)
+    // #[Route('', methods: ['POST'])]
+    // public function create(Request $request): JsonResponse
+    // {
+    //     $data = json_decode($request->getContent(), true);
+
+    //     if (!isset($data['name']) || empty(trim($data['name']))) {
+    //         return new JsonResponse(['status' => 'error', 'message' => 'Name is required.'], 400);
+    //     }
+
+    //     $participant = new Participant($data['name']);
+
+    //     $this->entityManager->persist($participant);
+    //     $this->entityManager->flush();
+
+    //     return new JsonResponse([
+    //         'status' => 'success',
+    //         'participant' => ['id' => $participant->getId(), 'name' => $participant->getName()]
+    //     ], 201);
+    // }
+
+    #[Route('', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        
-        $participant = new Participant($data['name']);
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($participant);
-        $em->flush();
 
-        return new JsonResponse(['status' => 'success', 'participant' => $participant], 200);
+        if (!isset($data['name']) || empty(trim($data['name']))) {
+            return new JsonResponse(['status' => 'error', 'message' => 'The "name" field is required.'], 400);
+        }
+
+        $participant = new Participant();
+        $participant->setName(trim($data['name']));
+
+        $this->entityManager->persist($participant);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'status' => 'success',
+            'participant' => [
+                'id' => $participant->getId(),
+                'name' => $participant->getName()
+            ]
+        ], 201);
     }
 
-    /**
-     * @Route("/api/participants/{id}", methods={"GET"})
-     */
-    public function viewParticipant(int $id)
+    #[Route('/{id}', methods: ['GET'])]
+    public function viewParticipant(int $id): JsonResponse
     {
         $participant = $this->participantRepository->find($id);
 
@@ -45,22 +77,26 @@ class ParticipantController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message' => 'Participant not found.'], 404);
         }
 
-        return new JsonResponse($participant, 200);
+        return new JsonResponse([
+            'id' => $participant->getId(),
+            'name' => $participant->getName()
+        ]);
     }
 
-    /**
-     * @Route("/api/participants", methods={"GET"})
-     */
-    public function listParticipants()
+    #[Route('', methods: ['GET'])]
+    public function listParticipants(): JsonResponse
     {
         $participants = $this->participantRepository->findAll();
-        return new JsonResponse($participants, 200);
+
+        $data = array_map(function (Participant $p) {
+            return ['id' => $p->getId(), 'name' => $p->getName()];
+        }, $participants);
+
+        return new JsonResponse($data);
     }
 
-    /**
-     * @Route("/api/participants/{id}", methods={"DELETE"})
-     */
-    public function deleteParticipant(int $id)
+    #[Route('/{id}', methods: ['DELETE'])]
+    public function deleteParticipant(int $id): JsonResponse
     {
         $participant = $this->participantRepository->find($id);
 
@@ -68,9 +104,9 @@ class ParticipantController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message' => 'Participant not found.'], 404);
         }
 
-        $this->getDoctrine()->getManager()->remove($participant);
-        $this->getDoctrine()->getManager()->flush();
+        $this->entityManager->remove($participant);
+        $this->entityManager->flush();
 
-        return new JsonResponse(['status' => 'success', 'message' => 'Participant deleted.'], 200);
+        return new JsonResponse(['status' => 'success', 'message' => 'Participant deleted.']);
     }
 }
