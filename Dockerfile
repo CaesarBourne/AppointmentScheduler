@@ -62,7 +62,7 @@ RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 777 var
 
 # Environment variables
-ENV APP_ENV=dev
+ENV APP_ENV=prod
 ENV APP_DEBUG=1
 ENV DATABASE_URL="mysql://admin:HereiterNu%410@symfony.cnauwe826vmx.eu-north-1.rds.amazonaws.com:3306/symfony"
 
