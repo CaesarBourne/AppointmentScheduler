@@ -2,32 +2,43 @@
 
 namespace App\Controller;
 
-
 use App\Service\AppointmentService;
 use App\Repository\AppointmentRepository;
 use App\Entity\Appointment;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/api/appointments')]
 class AppointmentController extends AbstractController
 {
-    private $appointmentService;
-    private $appointmentRepository;
+    private AppointmentService $appointmentService;
+    private AppointmentRepository $appointmentRepository;
+    private EntityManagerInterface $entityManager;
 
-    public function __construct(AppointmentService $appointmentService, AppointmentRepository $appointmentRepository)
-    {
+    public function __construct(
+        AppointmentService $appointmentService,
+        AppointmentRepository $appointmentRepository,
+        EntityManagerInterface $entityManager
+    ) {
         $this->appointmentService = $appointmentService;
         $this->appointmentRepository = $appointmentRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/api/appointments", methods={"POST"})
-     */
-    public function create(Request $request)
+    #[Route('', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
+        if (
+            !isset($data['participantId'], $data['startTime'], $data['endTime']) ||
+            empty($data['participantId']) || empty($data['startTime']) || empty($data['endTime'])
+        ) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Missing required fields.'], 400);
+        }
 
         try {
             $appointment = $this->appointmentService->createAppointment(
@@ -36,16 +47,22 @@ class AppointmentController extends AbstractController
                 new \DateTime($data['endTime'])
             );
 
-            return new JsonResponse(['status' => 'success', 'appointment' => $appointment], 200);
+            return new JsonResponse([
+                'status' => 'success',
+                'appointment' => [
+                    'id' => $appointment->getId(),
+                    'participant' => $appointment->getParticipant()->getName(),
+                    'startTime' => $appointment->getStartTime()->format(DATE_ATOM),
+                    'endTime' => $appointment->getEndTime()->format(DATE_ATOM),
+                ]
+            ], 201);
         } catch (\Exception $e) {
             return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
         }
     }
 
-    /**
-     * @Route("/api/appointments/{id}", methods={"GET"})
-     */
-    public function viewAppointment(int $id)
+    #[Route('/{id}', methods: ['GET'])]
+    public function viewAppointment(int $id): JsonResponse
     {
         $appointment = $this->appointmentRepository->find($id);
 
@@ -53,22 +70,33 @@ class AppointmentController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message' => 'Appointment not found.'], 404);
         }
 
-        return new JsonResponse($appointment, 200);
+        return new JsonResponse([
+            'id' => $appointment->getId(),
+            'participant' => $appointment->getParticipant()->getName(),
+            'startTime' => $appointment->getStartTime()->format(DATE_ATOM),
+            'endTime' => $appointment->getEndTime()->format(DATE_ATOM),
+        ]);
     }
 
-    /**
-     * @Route("/api/appointments", methods={"GET"})
-     */
-    public function listAppointments()
+    #[Route('', methods: ['GET'])]
+    public function listAppointments(): JsonResponse
     {
         $appointments = $this->appointmentRepository->findAll();
-        return new JsonResponse($appointments, 200);
+
+        $data = array_map(function (Appointment $a) {
+            return [
+                'id' => $a->getId(),
+                'participant' => $a->getParticipant()->getName(),
+                'startTime' => $a->getStartTime()->format(DATE_ATOM),
+                'endTime' => $a->getEndTime()->format(DATE_ATOM),
+            ];
+        }, $appointments);
+
+        return new JsonResponse($data);
     }
 
-    /**
-     * @Route("/api/appointments/{id}", methods={"DELETE"})
-     */
-    public function deleteAppointment(int $id)
+    #[Route('/{id}', methods: ['DELETE'])]
+    public function deleteAppointment(int $id): JsonResponse
     {
         $appointment = $this->appointmentRepository->find($id);
 
@@ -76,9 +104,9 @@ class AppointmentController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message' => 'Appointment not found.'], 404);
         }
 
-        $this->getDoctrine()->getManager()->remove($appointment);
-        $this->getDoctrine()->getManager()->flush();
+        $this->entityManager->remove($appointment);
+        $this->entityManager->flush();
 
-        return new JsonResponse(['status' => 'success', 'message' => 'Appointment deleted.'], 200);
+        return new JsonResponse(['status' => 'success', 'message' => 'Appointment deleted.']);
     }
 }
