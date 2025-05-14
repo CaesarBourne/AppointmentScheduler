@@ -13,10 +13,20 @@ class ParticipantService
         private EntityManagerInterface $entityManager
     ) {}
 
-    public function createParticipant(string $name): Participant
+    public function createParticipant(string $name, string $email): Participant
     {
+
+        $existing = $this->participantRepository->findOneBy(['email' => $email]);
+
+        if ($existing) {
+            return $existing; // Reuse existing participant
+        }
+
+
+
         $participant = new Participant();
         $participant->setName(trim($name));
+        $participant->setEmail(trim($email));
 
         $this->entityManager->persist($participant);
         $this->entityManager->flush();

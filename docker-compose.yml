@@ -3,29 +3,32 @@ version: "3.8"
 services:
   app:
     build: .
-    container_name: symfony_app
     ports:
-      - "8000:8000"
+      - "80:80"
     volumes:
       - .:/var/www/html
+      - ./var:/var/www/html/var
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=1
+      - DATABASE_URL=mysql://symfony_user:StrongPassword123@db:3306/symfony_db
     depends_on:
       - db
-    environment:
-      DATABASE_URL: "database-1.cnauwe826vmx.eu-north-1.rds.amazonaws.com"
-    command: bash -c "composer install && php -S 0.0.0.0:8000 -t public"
+    restart: unless-stopped
 
   db:
     image: mysql:8.0
-    container_name: mysql_db
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_name
-      MYSQL_USER: db_user
-      MYSQL_PASSWORD: db_pass
+      MYSQL_ROOT_PASSWORD: HereiterNu%410
+      MYSQL_DATABASE: symfony
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: HereiterNu%410
+    volumes:
+      - mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
 
 volumes:
-  db_data:
+  mysql_data:
