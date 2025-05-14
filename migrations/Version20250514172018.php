@@ -21,7 +21,7 @@ final class Version20250514172018 extends AbstractMigration
     {
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
-            CREATE UNIQUE INDEX UNIQ_D79F6B11E7927C74 ON participant (email)
+            CREATE UNIQUE INDEX UNIQ_D79F6B11E7927C73 ON participant (email)
         SQL);
     }
 
@@ -29,7 +29,7 @@ final class Version20250514172018 extends AbstractMigration
     {
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
-            DROP INDEX UNIQ_D79F6B11E7927C74 ON participant
+            DROP INDEX UNIQ_D79F6B11E7927C73 ON participant
         SQL);
     }
 }

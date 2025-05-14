@@ -11,7 +11,7 @@ services:
     environment:
       - APP_ENV=dev
       - APP_DEBUG=1
-      - DATABASE_URL=mysql://admin:HereiterNu%410@symfony.cnauwe826vmx.eu-north-1.rds.amazonaws.com:3306/symfony
+      - DATABASE_URL=mysql://admin:HereiterNu%410@13.60.162.81:3306/symfony
     depends_on:
       - db
     restart: unless-stopped
