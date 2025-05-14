@@ -16,6 +16,12 @@ class ParticipantRepository extends ServiceEntityRepository
         parent::__construct($registry, Participant::class);
     }
 
+    public function findOneByEmail(string $email): ?Participant
+{
+    return $this->findOneBy(['email' => $email]);
+}
+
+
     //    /**
     //     * @return Participant[] Returns an array of Participant objects
     //     */

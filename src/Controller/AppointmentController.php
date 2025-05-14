@@ -28,21 +28,56 @@ class AppointmentController extends AbstractController
         $this->entityManager = $entityManager;
     }
 
+    // #[Route('', methods: ['POST'])]
+    // public function create(Request $request): JsonResponse
+    // {
+    //     $data = json_decode($request->getContent(), true);
+
+    //     if (
+    //         !isset($data['participantId'], $data['startTime'], $data['endTime']) ||
+    //         empty($data['participantId']) || empty($data['startTime']) || empty($data['endTime'])
+    //     ) {
+    //         return new JsonResponse(['status' => 'error', 'message' => 'Missing required fields.'], 400);
+    //     }
+
+    //     try {
+    //         $appointment = $this->appointmentService->createAppointment(
+    //             $data['participantId'],
+    //             new \DateTime($data['startTime']),
+    //             new \DateTime($data['endTime'])
+    //         );
+
+    //         return new JsonResponse([
+    //             'status' => 'success',
+    //             'appointment' => [
+    //                 'id' => $appointment->getId(),
+    //                 'participant' => $appointment->getParticipant()->getName(),
+    //                 'startTime' => $appointment->getStartTime()->format(DATE_ATOM),
+    //                 'endTime' => $appointment->getEndTime()->format(DATE_ATOM),
+    //             ]
+    //         ], 201);
+    //     } catch (\Exception $e) {
+    //         return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
+    //     }
+    // }
+
+    
+
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
         if (
-            !isset($data['participantId'], $data['startTime'], $data['endTime']) ||
-            empty($data['participantId']) || empty($data['startTime']) || empty($data['endTime'])
+            !isset($data['email'], $data['startTime'], $data['endTime']) ||
+            empty($data['email']) || empty($data['startTime']) || empty($data['endTime'])
         ) {
             return new JsonResponse(['status' => 'error', 'message' => 'Missing required fields.'], 400);
         }
 
         try {
             $appointment = $this->appointmentService->createAppointment(
-                $data['participantId'],
+                $data['email'],
                 new \DateTime($data['startTime']),
                 new \DateTime($data['endTime'])
             );
@@ -52,6 +87,7 @@ class AppointmentController extends AbstractController
                 'appointment' => [
                     'id' => $appointment->getId(),
                     'participant' => $appointment->getParticipant()->getName(),
+                    'email' => $appointment->getParticipant()->getEmail(),
                     'startTime' => $appointment->getStartTime()->format(DATE_ATOM),
                     'endTime' => $appointment->getEndTime()->format(DATE_ATOM),
                 ]
@@ -60,6 +96,8 @@ class AppointmentController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
         }
     }
+    
+
 
     #[Route('/{id}', methods: ['GET'])]
     public function viewAppointment(int $id): JsonResponse

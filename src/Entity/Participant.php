@@ -16,7 +16,13 @@ class Participant
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+
+
+
+#[ORM\Column(length: 255, nullable: false, unique: true)]
+    private ?string $email = null;
+
+    #[ORM\Column(length: 255, nullable: false)]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'participant', targetEntity: Appointment::class)]
@@ -40,6 +46,17 @@ class Participant
     public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
 
         return $this;
     }

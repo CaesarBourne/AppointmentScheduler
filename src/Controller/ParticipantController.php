@@ -21,22 +21,39 @@ class ParticipantController extends AbstractController
     {
         try {
             $data = json_decode($request->getContent(), true);
+
+            
             if (!isset($data['name']) || empty(trim($data['name']))) {
                 return new JsonResponse(['status' => 'error', 'message' => 'The "name" field is required.'], 400);
             }
 
-            $participant = $this->participantService->createParticipant($data['name']);
+             if (!isset($data['email']) || empty(trim($data['email']))) {
+                return new JsonResponse(['status' => 'error', 'message' => 'The "email" field is required.'], 400);
+            }
+
+            $participant = $this->participantService->createParticipant(trim($data['name']),
+        trim($data['email']));
 
             return new JsonResponse([
                 'status' => 'success',
                 'participant' => [
                     'id' => $participant->getId(),
-                    'name' => $participant->getName()
+                    'name' => $participant->getName(),
+                    'email' => $participant->getEmail()
                 ]
             ], 201);
-        } catch (\Throwable $e) {
-            return new JsonResponse(['status' => 'error', 'message' => 'Internal server error'], 500);
-        }
+        } 
+    catch (\Throwable $e) {
+       return new JsonResponse([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ], 500);
+}
+        
+        // catch (\Throwable $e) {
+        //     // dump($e);
+        //     return new JsonResponse(['status' => 'error', 'message' => 'Internal server error '], 500);
+        // }
     }
 
     #[Route('/{id}', methods: ['GET'])]
@@ -50,7 +67,9 @@ class ParticipantController extends AbstractController
 
             return new JsonResponse([
                 'id' => $participant->getId(),
-                'name' => $participant->getName()
+                'name' => $participant->getName(),
+                'email' => $participant->getEmail()
+
             ]);
         } catch (\Throwable $e) {
             return new JsonResponse(['status' => 'error', 'message' => 'Internal server error'], 500);
@@ -63,15 +82,22 @@ class ParticipantController extends AbstractController
         try {
             $participants = $this->participantService->listParticipants();
 
-            $data = array_map(fn(Participant $p) => [
-                'id' => $p->getId(),
-                'name' => $p->getName()
+            $data = array_map(fn(Participant $pat) => [
+                'id' => $pat->getId(),
+                'name' => $pat->getName(),
+                'email' => $pat->getEmail()
+
             ], $participants);
 
             return new JsonResponse($data);
-        } catch (\Throwable $e) {
-            return new JsonResponse(['status' => 'error', 'message' => 'Internal server error'], 500);
-        }
+        } 
+         catch (\Throwable $e) {
+       return new JsonResponse([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ], 500);
+}
+        
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
