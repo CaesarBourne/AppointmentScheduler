@@ -24,26 +24,6 @@ class ParticipantController extends AbstractController
         $this->entityManager = $entityManager;
     }
 
-    // #[Route('', methods: ['POST'])]
-    // public function create(Request $request): JsonResponse
-    // {
-    //     $data = json_decode($request->getContent(), true);
-
-    //     if (!isset($data['name']) || empty(trim($data['name']))) {
-    //         return new JsonResponse(['status' => 'error', 'message' => 'Name is required.'], 400);
-    //     }
-
-    //     $participant = new Participant($data['name']);
-
-    //     $this->entityManager->persist($participant);
-    //     $this->entityManager->flush();
-
-    //     return new JsonResponse([
-    //         'status' => 'success',
-    //         'participant' => ['id' => $participant->getId(), 'name' => $participant->getName()]
-    //     ], 201);
-    // }
-
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
@@ -109,4 +89,31 @@ class ParticipantController extends AbstractController
 
         return new JsonResponse(['status' => 'success', 'message' => 'Participant deleted.']);
     }
+
+    #[Route('/{id}/appointments', methods: ['GET'])]
+public function getAppointmentsForParticipant(int $id): JsonResponse
+{
+    $participant = $this->participantRepository->find($id);
+
+    if (!$participant) {
+        return new JsonResponse(['status' => 'error', 'message' => 'Participant not found.'], 404);
+    }
+
+    $appointments = $participant->getAppointments();
+
+    $data = [];
+
+    foreach ($appointments as $appointment) {
+        $data[] = [
+            'id' => $appointment->getId(),
+            'startTime' => $appointment->getStartTime()->format(DATE_ATOM),
+            'endTime' => $appointment->getEndTime()->format(DATE_ATOM),
+        ];
+    }
+
+    return new JsonResponse([
+        'status' => 'success',
+        'appointments' => $data
+    ]);
+}
 }
