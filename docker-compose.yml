@@ -4,14 +4,14 @@ services:
   app:
     build: .
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - .:/var/www/html
       - ./var:/var/www/html/var
     environment:
       - APP_ENV=dev
       - APP_DEBUG=1
-      - DATABASE_URL=mysql://symfony_user:StrongPassword123@db:3306/symfony_db
+      - DATABASE_URL=mysql://admin:HereiterNu%410@symfony.cnauwe826vmx.eu-north-1.rds.amazonaws.com:3306/symfony
     depends_on:
       - db
     restart: unless-stopped
