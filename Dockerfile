@@ -46,15 +46,20 @@ RUN composer install --prefer-dist --no-autoloader --no-scripts --no-dev
 # Copy application
 COPY --chown=developer:developer . .
 
+# Ensure var directory exists with correct permissions
+RUN mkdir -p var/cache var/log && \
+    chmod -R 777 var
 
 RUN composer dump-autoload --optimize
-
 
 # Switch back to root for Apache
 USER root
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/var
+# Set proper permissions for Apache
+RUN chown -R www-data:www-data /var/www/html && \
+    find /var/www/html -type d -exec chmod 755 {} \; && \
+    find /var/www/html -type f -exec chmod 644 {} \; && \
+    chmod -R 777 var
 
 # Environment variables
 ENV APP_ENV=dev
