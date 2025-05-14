@@ -1,62 +1,8 @@
 <?php
 
-// }
-
-// src/Service/AppointmentService.php
-// namespace App\Service;
-// use App\Entity\Appointment;
-
-// use App\Repository\AppointmentRepository;
-// use App\Repository\ParticipantRepository;
-// use Doctrine\ORM\EntityManagerInterface;
-
-// class AppointmentService
-// {
-//     private $appointmentRepository;
-//     private $participantRepository;
-//     private $em;
-
-//     public function __construct(AppointmentRepository $appointmentRepository, ParticipantRepository $participantRepository, EntityManagerInterface $em)
-//     {
-//         $this->appointmentRepository = $appointmentRepository;
-//         $this->participantRepository = $participantRepository;
-//         $this->em = $em;
-//     }
-
-//     public function createAppointment($participantId, \DateTime $startTime, \DateTime $endTime)
-//     {
-//         $participant = $this->participantRepository->find($participantId);
-//         if (!$participant) {
-//             throw new \Exception('Participant not found.');
-//         }
-
-//         // Check if the appointment overlaps for the same participant
-//         $existingAppointments = $this->appointmentRepository->findBy([
-//             'participant' => $participant
-//         ]);
-
-//         foreach ($existingAppointments as $appointment) {
-//             if (($startTime < $appointment->getEndTime()) && ($endTime > $appointment->getStartTime())) {
-//                 throw new \Exception('This appointment overlaps with another.');
-//             }
-//         }
-
-//         $appointment = new Appointment();
-//         $appointment->setStartTime($startTime);
-//         $appointment->setEndTime($endTime);
-//         $appointment->setParticipant($participant);
-
-//         $this->em->persist($appointment);
-//         $this->em->flush();
-
-//         return $appointment;
-//     }
-// }
-
-
 namespace App\Service;
 
-use App\Entity\Appointment; // ✅ THIS IS REQUIRED
+use App\Entity\Appointment;
 use App\Entity\Participant;
 use App\Repository\ParticipantRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -82,7 +28,36 @@ class AppointmentService
             throw new \Exception('Participant not found.');
         }
 
-        $appointment = new Appointment(); // 💥 This line fails if Appointment is not imported
+        $now = new \DateTime();
+
+        // Ensure start and end times are not in the past
+        if ($startTime < $now || $endTime < $now) {
+            throw new \Exception('Appointment times must be in the future.');
+        }
+
+        // Ensure start time is before end time
+        if ($startTime >= $endTime) {
+            throw new \Exception('Start time must be before end time.');
+        }
+
+        // Check for overlapping appointments
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb->select('a')
+            ->from(Appointment::class, 'a')
+            ->where('a.participant = :participant')
+            ->andWhere('a.startTime < :endTime')
+            ->andWhere('a.endTime > :startTime')
+            ->setParameter('participant', $participant)
+            ->setParameter('startTime', $startTime)
+            ->setParameter('endTime', $endTime);
+
+        $conflictingAppointments = $qb->getQuery()->getResult();
+
+        if (count($conflictingAppointments) > 0) {
+            throw new \Exception('Participant already has an appointment scheduled during this time.');
+        }
+
+        $appointment = new Appointment();
         $appointment->setParticipant($participant);
         $appointment->setStartTime($startTime);
         $appointment->setEndTime($endTime);
@@ -93,3 +68,6 @@ class AppointmentService
         return $appointment;
     }
 }
+
+
+/
