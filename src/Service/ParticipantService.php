@@ -54,4 +54,10 @@ class ParticipantService
     {
         return $participant->getAppointments()->toArray();
     }
+
+    public function findOneByEmail(string $email): ?Participant
+{
+    return $this->findOneBy(['email' => $email]);
+}
+
 }
